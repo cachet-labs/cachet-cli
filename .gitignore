@@ -1,0 +1,16 @@
+# cachet runtime files
+cachet.config.json
+.cachet/
+
+# npm-downloaded binary (fetched at install time, never committed)
+npm/bin/cachet
+npm/bin/cachet.exe
+
+# Go build output
+cachet
+cachet.exe
+dist/
+
+# OS
+.DS_Store
+Thumbs.db

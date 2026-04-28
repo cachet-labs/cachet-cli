@@ -1,0 +1,31 @@
+{
+  "name": "cachet-cli",
+  "version": "0.1.0",
+  "description": "Turn runtime API failures into structured AI-debugging context with memory",
+  "keywords": ["cli", "debugging", "ai", "llm", "api", "developer-tools"],
+  "homepage": "https://github.com/cachet-labs/cachet-cli",
+  "bugs": {
+    "url": "https://github.com/cachet-labs/cachet-cli/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cachet-labs/cachet-cli.git"
+  },
+  "license": "MIT",
+  "author": "cachet-labs",
+  "bin": {
+    "cachet": "bin/cachet.js"
+  },
+  "scripts": {
+    "postinstall": "node install.js"
+  },
+  "files": [
+    "bin/cachet.js",
+    "install.js"
+  ],
+  "engines": {
+    "node": ">=14"
+  },
+  "os": ["darwin", "linux", "win32"],
+  "cpu": ["x64", "arm64"]
+}
