@@ -3,6 +3,7 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"os"
 	"strings"
 
@@ -93,7 +94,7 @@ func runCapture(cmd *cobra.Command, args []string) error {
 }
 
 // splitMethodPath splits "POST:/pay" → ("POST", "/pay").
-// Handles "POST:https://api.example.com/pay" by extracting the path.
+// Handles absolute URLs: "POST:https://api.example.com/pay" → ("POST", "/pay").
 func splitMethodPath(s string) (method, path string) {
 	idx := strings.IndexByte(s, ':')
 	if idx < 0 {
@@ -101,10 +102,10 @@ func splitMethodPath(s string) (method, path string) {
 	}
 	method = strings.ToUpper(s[:idx])
 	rest := s[idx+1:]
-	// If rest looks like a full URL, keep only the path portion.
-	if strings.HasPrefix(rest, "//") {
-		if slash := strings.Index(rest[2:], "/"); slash >= 0 {
-			rest = rest[2+slash:]
+	// If rest is a full or scheme-relative URL, extract only the path.
+	if strings.Contains(rest, "://") || strings.HasPrefix(rest, "//") {
+		if u, err := url.Parse(rest); err == nil && u.Path != "" {
+			rest = u.Path
 		}
 	}
 	return method, rest

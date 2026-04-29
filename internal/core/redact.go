@@ -16,7 +16,7 @@ var (
 	}
 
 	defaultPatterns = []*regexp.Regexp{
-		regexp.MustCompile(`Bearer [A-Za-z0-9\-._~+\/]+=*`),
+		regexp.MustCompile(`(?i)Bearer [A-Za-z0-9\-._~+\/]+=*`),
 		regexp.MustCompile(`eyJ[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+`),
 		regexp.MustCompile(`[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}`),
 		regexp.MustCompile(`AKIA[0-9A-Z]{16}`),

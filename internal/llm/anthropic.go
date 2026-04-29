@@ -3,6 +3,7 @@ package llm
 import (
 	"context"
 	"fmt"
+	"time"
 
 	anthropic "github.com/anthropics/anthropic-sdk-go"
 	"github.com/anthropics/anthropic-sdk-go/option"
@@ -27,7 +28,9 @@ func NewAnthropicAdapter(apiKey, model string) *AnthropicAdapter {
 
 // Ask sends prompt to the Anthropic API and returns the text response.
 func (a *AnthropicAdapter) Ask(prompt string) (string, error) {
-	msg, err := a.client.Messages.New(context.Background(), anthropic.MessageNewParams{
+	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
+	defer cancel()
+	msg, err := a.client.Messages.New(ctx, anthropic.MessageNewParams{
 		Model:     anthropic.Model(a.model),
 		MaxTokens: 4096,
 		Messages: []anthropic.MessageParam{

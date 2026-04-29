@@ -35,7 +35,13 @@ func NewIndex() (*Index, error) {
 }
 
 // Add appends caseID under fingerprint and saves the index.
+// It is a no-op if caseID is already present, preventing duplicate injections.
 func (idx *Index) Add(fingerprint, caseID string) error {
+	for _, id := range idx.data[fingerprint] {
+		if id == caseID {
+			return nil
+		}
+	}
 	idx.data[fingerprint] = append(idx.data[fingerprint], caseID)
 	return idx.save()
 }

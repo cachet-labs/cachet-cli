@@ -149,12 +149,7 @@ func runVerify(cmd *cobra.Command, args []string) error {
 func gitDiff(baseRef string) (string, error) {
 	out, err := exec.Command("git", "diff", baseRef).Output()
 	if err != nil {
-		// Try git diff --cached as a fallback (staged but not yet committed).
-		out2, err2 := exec.Command("git", "diff", "--cached").Output()
-		if err2 != nil {
-			return "", fmt.Errorf("git diff %s: %w", baseRef, err)
-		}
-		return string(out2), nil
+		return "", fmt.Errorf("git diff %s: %w", baseRef, err)
 	}
 	return string(out), nil
 }

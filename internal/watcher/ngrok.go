@@ -83,6 +83,9 @@ func (w *NgrokWatcher) ping() error {
 		return err
 	}
 	resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("unexpected status %d (is this the ngrok inspection API?)", resp.StatusCode)
+	}
 	return nil
 }
 
@@ -98,13 +101,14 @@ func (w *NgrokWatcher) poll() error {
 		return fmt.Errorf("decode ngrok response: %w", err)
 	}
 
+	// Rebuild seen from the current ngrok window to prevent unbounded growth.
+	// ngrok IDs are unique and never reused, so items that fall off the window
+	// will never reappear — safe to evict from seen.
+	fresh := make(map[string]bool, len(data.Requests))
 	for _, item := range data.Requests {
-		if w.seen[item.ID] {
-			continue
-		}
-		w.seen[item.ID] = true
+		fresh[item.ID] = w.seen[item.ID] // carry over "already processed" flag
 
-		if item.Response.StatusCode < w.minStatus {
+		if w.seen[item.ID] || item.Response.StatusCode < w.minStatus {
 			continue
 		}
 
@@ -113,10 +117,12 @@ func (w *NgrokWatcher) poll() error {
 		if err != nil {
 			continue
 		}
+		fresh[item.ID] = true
 		if w.onCapture != nil {
 			w.onCapture(safe)
 		}
 	}
+	w.seen = fresh
 	return nil
 }
 

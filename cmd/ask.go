@@ -97,8 +97,8 @@ func runAsk(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("ask: %w", err)
 	}
 
-	// StdoutAdapter already wrote to stdout.
-	if response == "" {
+	// StdoutAdapter printed the prompt directly; nothing left to do.
+	if _, isStdout := adapter.(*llm.StdoutAdapter); isStdout {
 		return nil
 	}
 

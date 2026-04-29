@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"os"
 	"strings"
 
 	"github.com/cachet-labs/cachet-cli/internal/core"
@@ -83,7 +84,12 @@ func (t *captureTransport) RoundTrip(req *http.Request) (*http.Response, error) 
 		var respBody []byte
 		if resp.Body != nil {
 			respBody, _ = io.ReadAll(io.LimitReader(resp.Body, maxBodyBytes))
+			// Drain and close the original body so the upstream TCP connection
+			// is returned to the pool even when the response exceeds maxBodyBytes.
+			_, _ = io.Copy(io.Discard, resp.Body)
+			_ = resp.Body.Close()
 			resp.Body = io.NopCloser(bytes.NewReader(respBody))
+			resp.ContentLength = int64(len(respBody))
 		}
 		status := resp.StatusCode
 		respHeaders := flattenHeaders(resp.Header)
@@ -118,10 +124,13 @@ func (p *Proxy) capture(
 		Error: errInfo,
 	}
 	safe, err := pipeline.Ingest(f, p.cfg, p.store)
-	if err != nil || p.onCapture == nil {
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "  cachet proxy: capture failed: %v\n", err)
 		return
 	}
-	p.onCapture(safe)
+	if p.onCapture != nil {
+		p.onCapture(safe)
+	}
 }
 
 func flattenHeaders(h http.Header) map[string]string {

@@ -73,6 +73,11 @@ func ParseResolverResponse(response, fingerprint string) (*Case, error) {
 	confidence := 0.75
 	if raw := fields["confidence"]; raw != "" {
 		if v, err := strconv.ParseFloat(raw, 64); err == nil {
+			if v > 1.0 {
+				v = 1.0
+			} else if v < 0.0 {
+				v = 0.0
+			}
 			confidence = v
 		}
 	}
