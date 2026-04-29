@@ -2,6 +2,9 @@ package cmd
 
 import (
 	"fmt"
+	"os/exec"
+	"runtime"
+	"strings"
 
 	"github.com/cachet-labs/cachet-cli/internal/core"
 	"github.com/cachet-labs/cachet-cli/internal/llm"
@@ -11,18 +14,26 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// minCaseConfidence is the minimum confidence required for a past case to be
+// injected into the ask prompt.
+const minCaseConfidence = 0.5
+
+var askClipboard bool
+
 var askCmd = &cobra.Command{
 	Use:   "ask <failure-id>",
 	Short: "Diagnose a failure with AI",
 	Long: `Build a structured prompt for the failure and send it to the configured LLM.
 
 If no LLM is configured the prompt is printed to stdout (pipe-ready):
-  cachet ask <id> | pbcopy`,
+  cachet ask <id> | pbcopy
+  cachet ask <id> --clipboard`,
 	Args: cobra.ExactArgs(1),
 	RunE: runAsk,
 }
 
 func init() {
+	askCmd.Flags().BoolVar(&askClipboard, "clipboard", false, "copy response to clipboard")
 	rootCmd.AddCommand(askCmd)
 }
 
@@ -35,7 +46,7 @@ func runAsk(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// Inject up to 3 similar cases from the global index.
+	// Inject up to 3 similar cases above the confidence threshold.
 	cases, err := loadSimilarCases(failure.Fingerprint)
 	if err != nil {
 		ui.Info(fmt.Sprintf("could not load similar cases: %v", err))
@@ -71,6 +82,15 @@ func runAsk(cmd *cobra.Command, args []string) error {
 	}
 
 	ui.DiagnosisBox(failure.Fingerprint, response)
+
+	if askClipboard {
+		if err := copyToClipboard(response); err != nil {
+			ui.Warn(fmt.Sprintf("clipboard copy failed: %v", err))
+		} else if ui.IsTTY() {
+			ui.Success("Response copied to clipboard")
+		}
+	}
+
 	return nil
 }
 
@@ -98,17 +118,16 @@ func loadSimilarCases(fingerprint string) ([]*core.Case, error) {
 		if err != nil {
 			continue
 		}
-		cases = append(cases, c)
+		if c.Confidence >= minCaseConfidence {
+			cases = append(cases, c)
+		}
 	}
 	return cases, nil
 }
 
 // selectAdapter returns the appropriate LLM adapter based on config.
 func selectAdapter(cfg *config.Config) llm.Adapter {
-	if cfg == nil {
-		return &llm.StdoutAdapter{}
-	}
-	if cfg.APIKey == "" {
+	if cfg == nil || cfg.APIKey == "" {
 		return &llm.StdoutAdapter{}
 	}
 	switch cfg.Provider {
@@ -118,4 +137,27 @@ func selectAdapter(cfg *config.Config) llm.Adapter {
 		return llm.NewOpenAIAdapter(cfg.APIKey, cfg.Model)
 	}
 	return &llm.StdoutAdapter{}
+}
+
+// copyToClipboard writes text to the system clipboard.
+func copyToClipboard(text string) error {
+	var cmd *exec.Cmd
+	switch runtime.GOOS {
+	case "darwin":
+		cmd = exec.Command("pbcopy")
+	case "linux":
+		if _, err := exec.LookPath("xclip"); err == nil {
+			cmd = exec.Command("xclip", "-selection", "clipboard")
+		} else if _, err := exec.LookPath("xsel"); err == nil {
+			cmd = exec.Command("xsel", "--clipboard", "--input")
+		} else {
+			return fmt.Errorf("no clipboard utility found (install xclip or xsel)")
+		}
+	case "windows":
+		cmd = exec.Command("clip")
+	default:
+		return fmt.Errorf("clipboard not supported on %s", runtime.GOOS)
+	}
+	cmd.Stdin = strings.NewReader(text)
+	return cmd.Run()
 }

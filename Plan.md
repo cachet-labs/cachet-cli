@@ -287,12 +287,12 @@ Goal: end-to-end working flow: capture → ask → cases → show
 
 ### Phase 3 — Polish & Extensions
 
-- [ ] `--clipboard` flag on `ask`
-- [ ] `cachet config init` — interactive setup wizard
-- [ ] `cachet cases --filter category=timeout` — filtered listing
-- [ ] Confidence threshold filtering on memory injection
-- [ ] Shell completion (`cachet completion bash/zsh/fish`)
-- [ ] Integration test suite (golden files for redact, fingerprint, formatter)
+- [x] `--clipboard` flag on `ask`
+- [x] `cachet config init` — interactive setup wizard
+- [x] `cachet cases --filter category=timeout` — filtered listing
+- [x] Confidence threshold filtering on memory injection
+- [x] Shell completion (`cachet completion bash/zsh/fish`)
+- [x] Integration test suite (golden files for redact, fingerprint, formatter)
 - [ ] Homebrew tap (`cachet-labs/homebrew-cachet-cli`)
 
 ---

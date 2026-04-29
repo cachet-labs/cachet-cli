@@ -1,0 +1,25 @@
+You are debugging a runtime API failure. Analyze the failure below and provide a structured diagnosis.
+
+== REQUEST ==
+Method: POST
+URL: /pay
+Body: {"amount":100}
+
+== RESPONSE ==
+Status: 500
+Body: {"error":"timeout"}
+
+== ERROR ==
+Type: timeout
+Message: upstream service timed out after 30s
+
+== SIMILAR PAST ISSUES ==
+- Fingerprint: POST:/pay:500:timeout
+  Root Cause: Connection pool limit exceeded
+  Fix: Set MAX_CONNECTIONS=20 and added retry with backoff
+
+== TASK ==
+1. Identify the root cause (1 sentence)
+2. Suggest a concrete fix (1–3 sentences)
+3. List edge cases or related failure modes to watch for
+4. Assign a category: timeout | auth | not_found | rate_limit | validation | upstream | config | unknown
