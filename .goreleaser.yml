@@ -25,7 +25,7 @@ archives:
   - formats:
       - tar.gz
     name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
-    wrap_in_directory: "false"
+    wrap_in_directory: false
     format_overrides:
       - goos: windows
         formats:
