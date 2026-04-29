@@ -259,30 +259,30 @@ Confidence: <0.0–1.0>
 
 Goal: end-to-end working flow: capture → ask → cases → show
 
-- [ ] `go.mod` init, dependency resolution
-- [ ] `pkg/config` — load `cachet.config.json` via viper, env var overrides (`CACHET_API_KEY` etc.)
-- [ ] `internal/core/fingerprint.go` — route normalization + fingerprint generation
-- [ ] `internal/core/redact.go` — default rules + config-defined patterns
-- [ ] `internal/core/formatter.go` — build LLM prompt from Failure + similar Cases
-- [ ] `internal/storage/local.go` — write/read `.cachet/recent/<id>.json`
-- [ ] `internal/storage/global.go` — write/read `~/.cachet/cases/<id>.json`
-- [ ] `internal/storage/index.go` — maintain `~/.cachet/index.json`
-- [ ] `internal/llm/adapter.go` — `LLMAdapter` interface: `Ask(prompt string) (string, error)`
-- [ ] `internal/llm/stdout.go` — print prompt to stdout (no-config mode)
-- [ ] `internal/llm/anthropic.go` — Anthropic adapter via official Go SDK
-- [ ] `cmd/root.go` — cobra root, config loading, `.cachet/` dir init
-- [ ] `cmd/capture.go` — stdin JSON + flag modes, redact, fingerprint, store locally
-- [ ] `cmd/ask.go` — load failure, fetch similar cases, build prompt, call adapter, print response
-- [ ] `cmd/cases.go` — list all global cases, tabular output
-- [ ] `cmd/show.go` — pretty-print a single case
-- [ ] `main.go` — entrypoint
+- [x] `go.mod` init, dependency resolution
+- [x] `pkg/config` — load `cachet.config.json` via viper, env var overrides (`CACHET_API_KEY` etc.)
+- [x] `internal/core/fingerprint.go` — route normalization + fingerprint generation
+- [x] `internal/core/redact.go` — default rules + config-defined patterns
+- [x] `internal/core/formatter.go` — build LLM prompt from Failure + similar Cases
+- [x] `internal/storage/local.go` — write/read `.cachet/recent/<id>.json`
+- [x] `internal/storage/global.go` — write/read `~/.cachet/cases/<id>.json`
+- [x] `internal/storage/index.go` — maintain `~/.cachet/index.json`
+- [x] `internal/llm/adapter.go` — `LLMAdapter` interface: `Ask(prompt string) (string, error)`
+- [x] `internal/llm/stdout.go` — print prompt to stdout (no-config mode)
+- [x] `internal/llm/anthropic.go` — Anthropic adapter via official Go SDK
+- [x] `cmd/root.go` — cobra root, config loading, `.cachet/` dir init
+- [x] `cmd/capture.go` — stdin JSON + flag modes, redact, fingerprint, store locally
+- [x] `cmd/ask.go` — load failure, fetch similar cases, build prompt, call adapter, print response
+- [x] `cmd/cases.go` — list all global cases, tabular output
+- [x] `cmd/show.go` — pretty-print a single case
+- [x] `main.go` — entrypoint
 
 ### Phase 2 — Memory + Resolution
 
 - [ ] `internal/core/resolver.go` — git diff → resolver prompt → structured Case parse
 - [ ] `cmd/verify.go` — replay request, check status, run git diff, call resolver, store Case + update index
 - [ ] `cmd/replay.go` — re-execute stored request, print response
-- [ ] Memory injection in `ask` — fetch top 2–3 cases by fingerprint from index
+- [x] Memory injection in `ask` — fetch top 2–3 cases by fingerprint from index
 - [ ] `internal/llm/openai.go` — OpenAI adapter (raw HTTP, no SDK dep)
 
 ### Phase 3 — Polish & Extensions
