@@ -21,7 +21,8 @@
   },
   "files": [
     "bin/cachet.js",
-    "install.js"
+    "install.js",
+    "README.md"
   ],
   "engines": {
     "node": ">=14"
