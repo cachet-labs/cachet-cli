@@ -32,6 +32,7 @@ knowledge base of root causes and fixes.
 // Execute is the CLI entrypoint called from main.
 func Execute(v string) {
 	version = v
+	rootCmd.Version = v
 	if err := rootCmd.Execute(); err != nil {
 		ui.Error(err.Error())
 		os.Exit(1)
@@ -40,7 +41,6 @@ func Execute(v string) {
 
 func init() {
 	cobra.OnInitialize(initConfig)
-	rootCmd.Version = version
 }
 
 func initConfig() {

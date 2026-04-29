@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/cachet-labs/cachet-cli/internal/core"
 )
@@ -55,6 +56,37 @@ func (s *LocalStore) ReadFailure(id string) (*core.Failure, error) {
 		return nil, fmt.Errorf("parse failure: %w", err)
 	}
 	return &f, nil
+}
+
+// LatestID returns the ID of the most recently modified failure file, or "" when
+// the directory is empty or does not exist.
+func (s *LocalStore) LatestID() (string, error) {
+	entries, err := os.ReadDir(s.dir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return "", nil
+		}
+		return "", fmt.Errorf("list failures: %w", err)
+	}
+	var latestName string
+	var latestMod time.Time
+	for _, e := range entries {
+		if e.IsDir() || !strings.HasSuffix(e.Name(), ".json") {
+			continue
+		}
+		info, err := e.Info()
+		if err != nil {
+			continue
+		}
+		if info.ModTime().After(latestMod) {
+			latestMod = info.ModTime()
+			latestName = e.Name()
+		}
+	}
+	if latestName == "" {
+		return "", nil
+	}
+	return strings.TrimSuffix(latestName, ".json"), nil
 }
 
 // ListIDs returns all failure IDs stored in the local directory.

@@ -5,12 +5,11 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/cachet-labs/cachet-cli/internal/core"
+	"github.com/cachet-labs/cachet-cli/internal/pipeline"
 	"github.com/cachet-labs/cachet-cli/internal/storage"
 	"github.com/cachet-labs/cachet-cli/internal/ui"
-	"github.com/google/uuid"
 	"github.com/spf13/cobra"
 )
 
@@ -73,31 +72,9 @@ func runCapture(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	// Assign ID and timestamp when not supplied by the incoming JSON.
-	if failure.ID == "" {
-		failure.ID = "f_" + uuid.New().String()
-	}
-	if failure.CapturedAt.IsZero() {
-		failure.CapturedAt = time.Now().UTC()
-	}
-
-	// Redact BEFORE fingerprinting and storage.
-	redactor, err := core.NewRedactor(cfg.Redact.Headers, cfg.Redact.Patterns)
+	safe, err := pipeline.Ingest(&failure, cfg, storage.NewLocalStore(".cachet/recent"))
 	if err != nil {
-		return fmt.Errorf("create redactor: %w", err)
-	}
-	safe := redactor.RedactFailure(&failure)
-
-	safe.Fingerprint = core.Fingerprint(
-		safe.Request.Method,
-		safe.Request.URL,
-		safe.Response.Status,
-		safe.Error.Type,
-	)
-
-	store := storage.NewLocalStore(".cachet/recent")
-	if err := store.WriteFailure(safe); err != nil {
-		return fmt.Errorf("store failure: %w", err)
+		return err
 	}
 
 	fmt.Println()

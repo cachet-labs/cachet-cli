@@ -49,7 +49,10 @@ cachet-cli/
 ├── cmd/                            # cobra command definitions (thin layer only)
 │   ├── root.go                     # root cmd, persistent flags, .cachet/ init
 │   ├── capture.go                  # cachet capture (stdin JSON or flags)
-│   ├── ask.go                      # cachet ask <id>
+│   ├── ask.go                      # cachet ask <id> / --latest
+│   ├── latest.go                   # cachet latest
+│   ├── proxy.go                    # cachet proxy --port --target
+│   ├── watch.go                    # cachet watch --ngrok
 │   ├── verify.go                   # cachet verify <id>
 │   ├── cases.go                    # cachet cases
 │   ├── show.go                     # cachet show <case-id>
@@ -62,8 +65,17 @@ cachet-cli/
 │   │   ├── redact.go               # strip auth headers, mask tokens/emails
 │   │   └── resolver.go             # git diff + LLM response → structured Case
 │   │
+│   ├── pipeline/
+│   │   └── ingest.go               # shared redact→fingerprint→store sequence
+│   │
+│   ├── proxy/
+│   │   └── proxy.go                # reverse proxy with capture transport
+│   │
+│   ├── watcher/
+│   │   └── ngrok.go                # ngrok inspection API poller
+│   │
 │   ├── storage/
-│   │   ├── local.go                # .cachet/recent/<id>.json
+│   │   ├── local.go                # .cachet/recent/<id>.json + LatestID()
 │   │   ├── global.go               # ~/.cachet/cases/<id>.json
 │   │   └── index.go                # ~/.cachet/index.json (fingerprint→[case_ids])
 │   │
@@ -112,7 +124,7 @@ Example: `GET /users/123 404 not_found` → `GET:/users/:id:404:not_found`
 1. **Redaction is always first.** `redact.Failure()` must be called before prompt building, before LLM send, and before writing any user-supplied body to disk.
 2. **Storage is append-only.** Failures and cases are never mutated after write. New data always gets a new ID.
 3. **`LLMAdapter` interface is the only LLM boundary.** No LLM SDK imports outside `internal/llm/`. All adapters implement `Ask(prompt string) (string, error)`.
-4. **`capture` never makes network calls.** Only `ask`, `verify`, and `replay` touch the network.
+4. **`capture` and `latest` never make network calls.** Only `ask`, `verify`, `replay`, `proxy`, and `watch` touch the network.
 5. **No-config mode must always work.** If `cachet.config.json` is absent or has no provider, `ask` prints the prompt to stdout instead of erroring.
 
 ---
@@ -199,11 +211,10 @@ The stdout adapter prints the fully-built prompt and exits 0. It is not an error
 
 | Phase | Scope | Status |
 |---|---|---|
-| 1 | capture, ask, cases, show + all internals | Not started |
-| 2 | verify, replay, memory injection, OpenAI adapter | Not started |
-| 3 | polish, shell completion, goreleaser, brew tap | Not started |
-
-When starting Phase 1, work through `Plan.md` checklist top-to-bottom. The dependency order matters: `config` → `fingerprint` + `redact` → `formatter` → `storage` → `llm` → `cmd`.
+| 1 | capture, ask, cases, show + all internals | Complete |
+| 2 | verify, replay, memory injection, OpenAI adapter | Complete |
+| 3 | proxy, watch (ngrok), latest, pipeline refactor | Complete |
+| 4 | shell completion, goreleaser, brew tap | Not started |
 
 ---
 
@@ -214,4 +225,4 @@ When starting Phase 1, work through `Plan.md` checklist top-to-bottom. The depen
 - Do not add retries or circuit breakers to LLM calls in MVP — keep the adapter thin.
 - Do not store raw user secrets in failures on disk — redaction must run before any write.
 - Do not use `cobra.OnInitialize` for anything that does I/O beyond reading the config file.
-- Do not add `--verbose` debug logging yet — defer to Phase 3.
+- Do not add `--verbose` debug logging yet — defer to Phase 4.

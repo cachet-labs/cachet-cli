@@ -18,27 +18,48 @@ import (
 // injected into the ask prompt.
 const minCaseConfidence = 0.5
 
-var askClipboard bool
+var (
+	askClipboard bool
+	askLatest    bool
+)
 
 var askCmd = &cobra.Command{
-	Use:   "ask <failure-id>",
+	Use:   "ask [failure-id]",
 	Short: "Diagnose a failure with AI",
 	Long: `Build a structured prompt for the failure and send it to the configured LLM.
 
 If no LLM is configured the prompt is printed to stdout (pipe-ready):
   cachet ask <id> | pbcopy
-  cachet ask <id> --clipboard`,
-	Args: cobra.ExactArgs(1),
+  cachet ask <id> --clipboard
+  cachet ask --latest`,
+	Args: cobra.RangeArgs(0, 1),
 	RunE: runAsk,
 }
 
 func init() {
 	askCmd.Flags().BoolVar(&askClipboard, "clipboard", false, "copy response to clipboard")
+	askCmd.Flags().BoolVar(&askLatest, "latest", false, "diagnose the most recently captured failure")
 	rootCmd.AddCommand(askCmd)
 }
 
 func runAsk(cmd *cobra.Command, args []string) error {
-	id := args[0]
+	var id string
+	if askLatest {
+		s := storage.NewLocalStore(".cachet/recent")
+		latest, err := s.LatestID()
+		if err != nil {
+			return err
+		}
+		if latest == "" {
+			return fmt.Errorf("no failures captured yet")
+		}
+		id = latest
+	} else {
+		if len(args) == 0 {
+			return fmt.Errorf("provide a failure ID or use --latest")
+		}
+		id = args[0]
+	}
 
 	localStore := storage.NewLocalStore(".cachet/recent")
 	failure, err := localStore.ReadFailure(id)

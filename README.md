@@ -7,6 +7,11 @@
 ```
 cachet capture --url POST:/pay --status 500 --error timeout
 cachet ask <failure-id>
+cachet ask --latest
+
+cachet proxy --port 8080 --target http://localhost:3000
+cachet watch --ngrok
+
 cachet verify <failure-id>
 cachet cases
 ```
@@ -58,6 +63,7 @@ cat failure.json | cachet capture
 
 ```bash
 cachet ask <failure-id>
+cachet ask --latest               # shorthand for the most recent failure
 ```
 
 - With an LLM configured: sends a structured prompt and displays the diagnosis.
@@ -93,12 +99,49 @@ cachet show <case-id>                 # inspect one
 
 ---
 
+## Auto-capture with proxy or tunnel watcher
+
+Skip `cachet capture` entirely — let cachet intercept failures automatically.
+
+### Local reverse proxy
+
+```bash
+cachet proxy --port 8080 --target http://localhost:3000
+```
+
+Every request proxied through `:8080` that returns ≥ 400 (configurable with `--min-status`) is automatically redacted, fingerprinted, and stored. Connection errors to the upstream are captured as 502s.
+
+```bash
+cachet proxy --port 8080 --target http://localhost:3000 --min-status 500
+```
+
+### ngrok tunnel watcher
+
+```bash
+cachet watch --ngrok
+```
+
+Polls the ngrok local inspection API (`http://localhost:4040/api/requests/http`) every 2 seconds and captures any failing requests. Requires ngrok to be running (`ngrok http <port>`).
+
+```bash
+cachet watch --ngrok --port 4041       # non-default inspection port
+cachet watch --ngrok --min-status 500  # only 5xx
+```
+
+Both modes print the failure ID and a ready-to-run `cachet ask` hint immediately after capture.
+
+---
+
 ## All commands
 
 | Command | Description |
 |---|---|
 | `cachet capture` | Capture a failure from flags or stdin JSON |
 | `cachet ask <id>` | Diagnose with AI (or print prompt if unconfigured) |
+| `cachet ask --latest` | Diagnose the most recently captured failure |
+| `cachet latest` | Print the most recent failure ID (for shell pipelines) |
+| `cachet proxy` | Auto-capture via local reverse proxy |
+| `cachet watch` | Auto-capture from ngrok tunnel |
 | `cachet verify <id>` | Replay + diff → resolve → store case |
 | `cachet replay <id>` | Re-execute the stored request |
 | `cachet cases` | List all resolved cases |
