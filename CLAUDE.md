@@ -63,9 +63,10 @@ cachet-cli/
 ├── internal/
 │   ├── core/
 │   │   ├── fingerprint.go          # METHOD:NORMALIZED_ROUTE:STATUS:ERROR_TYPE
-│   │   ├── formatter.go            # failure + past cases → LLM prompt string
+│   │   ├── formatter.go            # failure + past cases → TOON-encoded LLM prompt
 │   │   ├── redact.go               # strip auth headers, mask tokens/emails
-│   │   └── resolver.go             # git diff + LLM response → structured Case
+│   │   ├── resolver.go             # git diff + LLM response → structured Case
+│   │   └── toon.go                 # TOON encoder (toonFailure, toonCases) for LLM input
 │   │
 │   ├── pipeline/
 │   │   └── ingest.go               # shared redact→fingerprint→store sequence
@@ -131,6 +132,7 @@ Example: `GET /users/123 404 not_found` → `GET:/users/:id:404:not_found`
 3. **`LLMAdapter` interface is the only LLM boundary.** No LLM SDK imports outside `internal/llm/`. All adapters implement `Ask(prompt string) (string, error)`.
 4. **`capture` and `latest` never make network calls.** Only `ask`, `verify`, `replay`, `proxy`, and `watch` touch the network.
 5. **No-config mode must always work.** If `cachet.config.json` is absent or has no provider, `ask` prints the prompt to stdout instead of erroring.
+6. **LLM prompts use TOON, not JSON.** Storage stays JSON; TOON encoding (`internal/core/toon.go`) is applied only at the LLM input boundary in `BuildPrompt` and `BuildResolverPrompt`. Do not pass raw JSON objects into prompts.
 
 ---
 

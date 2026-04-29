@@ -78,6 +78,7 @@ cachet ask --latest               # shorthand for the most recent failure
 ```
 
 - With an LLM configured: sends a structured prompt and displays the diagnosis.
+- Prompts are encoded in **[TOON](https://github.com/toon-format/toon)** (Token-Oriented Object Notation) — a compact, lossless alternative to JSON that reduces token usage on every call.
 - Without config: prints the prompt to stdout — pipe it anywhere:
 
 ```bash
@@ -209,6 +210,26 @@ Add custom patterns in `cachet.config.json`:
   }
 }
 ```
+
+---
+
+## Token efficiency — TOON encoding
+
+Prompts sent to the LLM are encoded in **[TOON](https://github.com/toon-format/toon)** (Token-Oriented Object Notation) rather than JSON. TOON is a compact, lossless representation of the JSON data model designed specifically for LLM input.
+
+Data stays as JSON on disk. TOON is only used at the LLM boundary.
+
+**Example — 3 past cases in TOON vs JSON:**
+
+```
+# TOON (4 lines)
+similar_cases[3]{fingerprint,rootCause,fix,category,confidence}:
+  POST:/pay:500:timeout,DB pool exhausted,Set MAX_CONNECTIONS=20,timeout,0.91
+  POST:/pay:500:timeout,Redis timeout,Added circuit breaker,timeout,0.78
+  POST:/pay:500:timeout,Stripe SDK timeout too low,Set stripe.Timeout=45s,upstream,0.65
+```
+
+vs. the equivalent JSON which repeats every key name three times.
 
 ---
 

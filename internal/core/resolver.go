@@ -10,27 +10,25 @@ import (
 )
 
 // BuildResolverPrompt creates the LLM prompt used in `verify` to extract a structured Case.
+// Failure data is TOON-encoded to reduce tokens; the output format section is kept verbatim
+// because ParseResolverResponse depends on its exact line structure.
 func BuildResolverPrompt(f *Failure, diff string) string {
 	var sb strings.Builder
 
-	sb.WriteString("A bug was fixed. Given the failure context and the git diff below, generate a structured resolution.\n\n")
+	sb.WriteString("A bug was fixed. Extract a structured resolution from the failure and git diff below.\n\n")
 
-	sb.WriteString("== ORIGINAL FAILURE ==\n")
-	fmt.Fprintf(&sb, "Fingerprint: %s\n", f.Fingerprint)
-	fmt.Fprintf(&sb, "Error Type: %s\n", f.Error.Type)
-	fmt.Fprintf(&sb, "Error Message: %s\n", f.Error.Message)
-	fmt.Fprintf(&sb, "Status: %d\n", f.Response.Status)
+	sb.WriteString(toonFailure(f))
 	sb.WriteString("\n")
 
-	sb.WriteString("== GIT DIFF ==\n")
+	sb.WriteString("git_diff:\n")
 	if diff == "" {
-		sb.WriteString("(no diff provided)\n")
+		sb.WriteString("  (none)\n")
 	} else {
 		sb.WriteString(diff)
-		sb.WriteString("\n")
 	}
 	sb.WriteString("\n")
 
+	// Output format kept verbatim — ParseResolverResponse parses these exact keys.
 	sb.WriteString("== OUTPUT FORMAT (strict — no extra text) ==\n")
 	sb.WriteString("Root Cause: <one sentence identifying the root cause>\n")
 	sb.WriteString("Fix: <one sentence describing the fix applied>\n")

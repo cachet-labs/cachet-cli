@@ -95,7 +95,7 @@ func TestBuildResolverPrompt(t *testing.T) {
 	}
 	prompt := BuildResolverPrompt(f, "diff --git a/config.go\n+MAX_CONNECTIONS=20")
 
-	for _, want := range []string{"POST:/pay:500:timeout", "GIT DIFF", "Root Cause:", "Confidence:"} {
+	for _, want := range []string{"POST:/pay:500:timeout", "git_diff:", "Root Cause:", "Confidence:"} {
 		if !strings.Contains(prompt, want) {
 			t.Errorf("prompt missing %q", want)
 		}

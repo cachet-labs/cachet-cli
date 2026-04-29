@@ -1,25 +1,22 @@
-You are debugging a runtime API failure. Analyze the failure below and provide a structured diagnosis.
+You are debugging a runtime API failure. Analyze the failure and provide a structured diagnosis.
 
-== REQUEST ==
-Method: POST
-URL: /pay
-Body: {"amount":100}
+failure:
+  request:
+    method: POST
+    url: /pay
+    body: {"amount":100}
+  response:
+    status: 500
+    body: {"error":"timeout"}
+  error:
+    type: timeout
+    message: upstream service timed out after 30s
 
-== RESPONSE ==
-Status: 500
-Body: {"error":"timeout"}
+similar_cases[1]{fingerprint,rootCause,fix,category,confidence}:
+  POST:/pay:500:timeout,Connection pool limit exceeded,Set MAX_CONNECTIONS=20 and added retry with backoff,,0.00
 
-== ERROR ==
-Type: timeout
-Message: upstream service timed out after 30s
-
-== SIMILAR PAST ISSUES ==
-- Fingerprint: POST:/pay:500:timeout
-  Root Cause: Connection pool limit exceeded
-  Fix: Set MAX_CONNECTIONS=20 and added retry with backoff
-
-== TASK ==
-1. Identify the root cause (1 sentence)
-2. Suggest a concrete fix (1–3 sentences)
-3. List edge cases or related failure modes to watch for
-4. Assign a category: timeout | auth | not_found | rate_limit | validation | upstream | config | unknown
+task:
+  1. identify the root cause (1 sentence)
+  2. suggest a concrete fix (1-3 sentences)
+  3. list edge cases or related failure modes to watch for
+  4. assign a category: timeout|auth|not_found|rate_limit|validation|upstream|config|unknown

@@ -25,7 +25,7 @@ Interactive usage guide and setup wizard for **cachet-cli** — the AI-powered A
 
 ## What cachet is for
 
-`cachet` sits between your app and an LLM. When an API call fails, you capture it. cachet fingerprints it, strips secrets, builds a high-quality debugging prompt, and sends it to your LLM. When you fix the bug, you verify it — cachet extracts a structured Case (root cause, fix, category, confidence) and stores it globally. Next time the same class of failure happens, the past fix is injected automatically.
+`cachet` sits between your app and an LLM. When an API call fails, you capture it. cachet fingerprints it, strips secrets, builds a high-quality debugging prompt encoded in **TOON** (Token-Oriented Object Notation) to minimize token usage, and sends it to your LLM. When you fix the bug, you verify it — cachet extracts a structured Case (root cause, fix, category, confidence) and stores it globally. Next time the same class of failure happens, the past fix is injected automatically.
 
 **The loop:**
 ```
@@ -594,6 +594,37 @@ UUIDs, numeric segments, and long hex strings are normalized to `:id`.
   }
 }
 ```
+
+---
+
+## Token efficiency — TOON encoding
+
+All LLM prompts (ask and verify) are encoded in **TOON** (Token-Oriented Object Notation) — a compact, lossless alternative to JSON designed for LLM input. Data is stored as JSON on disk; TOON is only used at the LLM boundary.
+
+TOON combines YAML-style indentation for nested objects with CSV-style tabular rows for uniform arrays:
+
+```
+failure:
+  fingerprint: POST:/pay:500:timeout
+  request:
+    method: POST
+    url: /pay
+    body: {"amount":100}
+  response:
+    status: 500
+  error:
+    type: timeout
+    message: payment service did not respond within 30s
+
+similar_cases[3]{fingerprint,rootCause,fix,category,confidence}:
+  POST:/pay:500:timeout,DB pool exhausted,Set MAX_CONNECTIONS=20,timeout,0.91
+  POST:/pay:500:timeout,Redis timeout,Added circuit breaker,timeout,0.78
+  POST:/pay:500:timeout,Stripe SDK timeout too low,Set stripe.Timeout=45s,upstream,0.65
+```
+
+The tabular format for past cases is the biggest win: 3 cases go from 12+ lines (with repeated `Fingerprint:`, `Root Cause:`, `Fix:` keys) to 4 lines.
+
+See: [github.com/toon-format/toon](https://github.com/toon-format/toon)
 
 ---
 
