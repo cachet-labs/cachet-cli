@@ -26,6 +26,16 @@ npm install -g cachet-cli
 
 Or download a binary directly from [GitHub Releases](https://github.com/cachet-labs/cachet-cli/releases).
 
+### AI agent skill
+
+If you use Claude Code, Cursor, Windsurf, or any [skills.sh](https://skills.sh)-compatible agent, install the cachet skill for in-editor guidance on setup, proxy mode, commands, and troubleshooting:
+
+```bash
+npx skills add cachet-labs/cachet-cli
+```
+
+Then type `/cachet` in your agent to get started.
+
 ---
 
 ## Quick start
