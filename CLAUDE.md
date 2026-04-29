@@ -16,6 +16,7 @@ go build -o cachet .
 
 # Run without installing
 go run . capture --url POST:/pay --status 500 --error timeout
+go run . capture --url POST:https://api.example.com/pay --status 500 --error timeout
 
 # Test
 go test ./...
@@ -157,7 +158,7 @@ Env var overrides (take precedence over file):
 `Authorization`, `Cookie`, `Set-Cookie`, `X-Api-Key`, `X-Auth-Token`
 
 **Values masked to `[REDACTED]`:**
-- Bearer tokens
+- Bearer tokens (case-insensitive — matches `Bearer`, `bearer`, etc.)
 - JWTs (`eyJ...`)
 - Email addresses
 - AWS access key IDs (`AKIA...`)

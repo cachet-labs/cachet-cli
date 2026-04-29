@@ -47,9 +47,10 @@ Supports **Anthropic** (`claude-sonnet-4-6`) and **OpenAI** (`gpt-4o`).
 
 ### 2. Capture a failure
 
-From flags:
+From flags (relative path or full URL both work):
 ```bash
 cachet capture --url POST:/pay --status 500 --error timeout --body '{"amount":100}'
+cachet capture --url POST:https://api.stripe.com/v1/charges --status 500 --error timeout
 ```
 
 From stdin JSON (pipe from your app or log):
@@ -156,7 +157,7 @@ Secrets are stripped **before** any prompt is built, LLM call is made, or data i
 
 Defaults (always applied):
 - Headers: `Authorization`, `Cookie`, `Set-Cookie`, `X-Api-Key`, `X-Auth-Token`
-- Values: Bearer tokens, JWTs, email addresses, AWS key IDs
+- Values: Bearer tokens (case-insensitive), JWTs, email addresses, AWS key IDs
 
 Add custom patterns in `cachet.config.json`:
 ```json
