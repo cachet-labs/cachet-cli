@@ -108,11 +108,14 @@ func selectAdapter(cfg *config.Config) llm.Adapter {
 	if cfg == nil {
 		return &llm.StdoutAdapter{}
 	}
+	if cfg.APIKey == "" {
+		return &llm.StdoutAdapter{}
+	}
 	switch cfg.Provider {
 	case "anthropic":
-		if cfg.APIKey != "" {
-			return llm.NewAnthropicAdapter(cfg.APIKey, cfg.Model)
-		}
+		return llm.NewAnthropicAdapter(cfg.APIKey, cfg.Model)
+	case "openai":
+		return llm.NewOpenAIAdapter(cfg.APIKey, cfg.Model)
 	}
 	return &llm.StdoutAdapter{}
 }

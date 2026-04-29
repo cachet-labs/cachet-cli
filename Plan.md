@@ -279,11 +279,11 @@ Goal: end-to-end working flow: capture → ask → cases → show
 
 ### Phase 2 — Memory + Resolution
 
-- [ ] `internal/core/resolver.go` — git diff → resolver prompt → structured Case parse
-- [ ] `cmd/verify.go` — replay request, check status, run git diff, call resolver, store Case + update index
-- [ ] `cmd/replay.go` — re-execute stored request, print response
+- [x] `internal/core/resolver.go` — git diff → resolver prompt → structured Case parse
+- [x] `cmd/verify.go` — replay request, check status, run git diff, call resolver, store Case + update index
+- [x] `cmd/replay.go` — re-execute stored request, print response
 - [x] Memory injection in `ask` — fetch top 2–3 cases by fingerprint from index
-- [ ] `internal/llm/openai.go` — OpenAI adapter (raw HTTP, no SDK dep)
+- [x] `internal/llm/openai.go` — OpenAI adapter (raw HTTP, no SDK dep)
 
 ### Phase 3 — Polish & Extensions
 
