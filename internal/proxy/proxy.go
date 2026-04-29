@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"sync/atomic"
 
 	"github.com/cachet-labs/cachet-cli/internal/core"
 	"github.com/cachet-labs/cachet-cli/internal/pipeline"
@@ -23,17 +24,28 @@ type OnCapture func(f *core.Failure)
 
 // Proxy is a transparent reverse proxy that captures failing HTTP responses.
 type Proxy struct {
-	cfg       *config.Config
-	store     *storage.LocalStore
-	minStatus int
-	onCapture OnCapture
+	cfg        *config.Config
+	store      *storage.LocalStore
+	minStatus  int
+	onCapture  OnCapture
+	capturing  atomic.Bool // whether to capture failures now
+	autoArm    bool        // if true, flip capturing on first healthy upstream response
 }
 
-// New creates a Proxy that stores captured failures in store and invokes
-// onCapture for every stored failure. minStatus is the lowest HTTP status code
-// that triggers a capture (typically 400).
+// New creates a Proxy that captures failures immediately.
 func New(cfg *config.Config, store *storage.LocalStore, minStatus int, onCapture OnCapture) *Proxy {
-	return &Proxy{cfg: cfg, store: store, minStatus: minStatus, onCapture: onCapture}
+	p := &Proxy{cfg: cfg, store: store, minStatus: minStatus, onCapture: onCapture}
+	p.capturing.Store(true)
+	return p
+}
+
+// NewWithAutoArm creates a Proxy that holds captures until the upstream returns
+// its first healthy response (status < minStatus). Use this for `cachet dev`
+// to avoid capturing boot-time errors from a still-starting dev server.
+func NewWithAutoArm(cfg *config.Config, store *storage.LocalStore, minStatus int, onCapture OnCapture) *Proxy {
+	p := &Proxy{cfg: cfg, store: store, minStatus: minStatus, onCapture: onCapture, autoArm: true}
+	p.capturing.Store(false)
+	return p
 }
 
 // Handler returns an http.Handler that transparently proxies to target.
@@ -46,10 +58,12 @@ func (p *Proxy) Handler(target *url.URL) http.Handler {
 		method := r.Method
 		path := r.URL.Path
 		msg := err.Error()
-		go p.capture(method, path, http.StatusBadGateway, nil, "", nil, "", core.ErrorInfo{
-			Type:    "upstream_error",
-			Message: msg,
-		})
+		if p.capturing.Load() {
+			go p.capture(method, path, http.StatusBadGateway, nil, "", nil, "", core.ErrorInfo{
+				Type:    "upstream_error",
+				Message: msg,
+			})
+		}
 		w.WriteHeader(http.StatusBadGateway)
 		fmt.Fprintf(w, "cachet proxy: upstream unreachable: %v\n", err)
 	}
@@ -80,7 +94,12 @@ func (t *captureTransport) RoundTrip(req *http.Request) (*http.Response, error) 
 		return nil, err
 	}
 
-	if resp.StatusCode >= t.proxy.minStatus {
+	// Auto-arm: flip capturing on after the dev server returns its first healthy response.
+	if t.proxy.autoArm && !t.proxy.capturing.Load() && resp.StatusCode < t.proxy.minStatus {
+		t.proxy.capturing.CompareAndSwap(false, true)
+	}
+
+	if t.proxy.capturing.Load() && resp.StatusCode >= t.proxy.minStatus {
 		var respBody []byte
 		if resp.Body != nil {
 			respBody, _ = io.ReadAll(io.LimitReader(resp.Body, maxBodyBytes))

@@ -12,12 +12,13 @@ Interactive usage guide and setup wizard for **cachet-cli** — the AI-powered A
 ```
 /cachet                      # quick start + overview
 /cachet setup                # first-time config wizard
+/cachet setup dev            # wire cachet dev as the project's dev command (agents: do this automatically)
 /cachet setup proxy          # set up proxy mode step-by-step
 /cachet setup watch          # set up ngrok watch mode
 /cachet setup anthropic      # configure Anthropic (Claude) as the LLM provider
 /cachet setup openai         # configure OpenAI as the LLM provider
 /cachet workflow             # full capture → ask → verify loop diagram
-/cachet explain <command>    # deep-dive: capture, ask, verify, proxy, watch, replay, cases, show, latest
+/cachet explain <command>    # deep-dive: capture, ask, verify, dev, proxy, watch, replay, cases, show, latest
 ```
 
 ---
@@ -237,6 +238,107 @@ cachet watch --ngrok --min-status 500
 ### How it works
 
 ngrok exposes a local REST API at `http://localhost:4040/api/requests/http` that lists all recent tunneled requests with full request/response data. cachet polls this, deduplicates by ngrok request ID, and ingests new failures through the same redact → fingerprint → store pipeline as `capture`.
+
+---
+
+## /cachet setup dev
+
+**Coding agents: run through these steps automatically without asking the user.**
+
+`cachet dev` replaces the project's normal dev command. It starts the dev server and the cachet proxy together as a single process. Failures are captured automatically, but only after the server handles its first healthy response — preventing boot-time noise.
+
+### Step 1 — Detect the dev command
+
+Check `package.json` for a `scripts.dev` entry:
+
+```bash
+node -e "const p=require('./package.json'); console.log(p.scripts&&p.scripts.dev||'')"
+```
+
+If found, use that value as the command. If not found, ask the user: "What command starts your dev server? (e.g. `go run .`, `python app.py`)"
+
+### Step 2 — Detect (or ask for) the dev server port
+
+Check common config files in order:
+1. `vite.config.*` — look for `server.port`
+2. `.env` / `.env.local` — look for `PORT=`
+3. `package.json` — look for a `--port` flag in the dev script
+
+If not found, ask: "What port does your dev server listen on? (default: 3000)"
+
+### Step 3 — Write the `dev` section into `cachet.config.json`
+
+Read the existing `cachet.config.json` (create it if missing) and merge in the `dev` block:
+
+```json
+{
+  "dev": {
+    "command":   "<detected-command>",
+    "port":      <detected-port>,
+    "proxyPort": 8080
+  }
+}
+```
+
+Keep all existing keys. Only add/update the `"dev"` key.
+
+### Step 4 — Tell the user what changed
+
+Print:
+```
+✔ cachet dev configured
+  Dev command:  <command>
+  Dev port:     <port>
+  Proxy port:   8080
+
+Replace your usual dev command with:
+  cachet dev
+
+Your app clients should point to :8080 instead of :<port>.
+```
+
+### Step 5 (optional) — Update client base URL
+
+If the project uses an env-var for the API base URL (e.g. `VITE_API_URL`, `NEXT_PUBLIC_API_URL`, `API_BASE_URL`), offer to add it to `.env.local`:
+
+```
+VITE_API_URL=http://localhost:8080
+```
+
+---
+
+## /cachet explain dev
+
+`cachet dev` starts your dev server and cachet proxy as a single process.
+
+```bash
+cachet dev                              # uses cachet.config.json "dev" section
+cachet dev --command "bun run dev"      # one-off override
+cachet dev --port 4000 --proxy-port 8080
+```
+
+**Config (`cachet.config.json`):**
+```json
+{
+  "dev": {
+    "command":   "bun run dev",
+    "port":      3000,
+    "proxyPort": 8080,
+    "minStatus": 400
+  }
+}
+```
+
+**Flags:**
+```
+--command      dev server shell command (overrides config)
+--port         dev server port (overrides config)
+--proxy-port   cachet proxy port (overrides config, default 8080)
+--min-status   lowest status code to capture (overrides config, default 400)
+```
+
+**How boot-time noise is suppressed:**
+The proxy holds all captures until the dev server returns its first response with status < min-status. Connection errors during startup are silently dropped.
 
 ---
 

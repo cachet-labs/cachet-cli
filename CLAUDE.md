@@ -52,6 +52,7 @@ cachet-cli/
 │   ├── capture.go                  # cachet capture (stdin JSON or flags)
 │   ├── ask.go                      # cachet ask <id> / --latest
 │   ├── latest.go                   # cachet latest
+│   ├── dev.go                      # cachet dev --command --port --proxy-port
 │   ├── proxy.go                    # cachet proxy --port --target
 │   ├── watch.go                    # cachet watch --ngrok
 │   ├── verify.go                   # cachet verify <id>
@@ -68,6 +69,9 @@ cachet-cli/
 │   │
 │   ├── pipeline/
 │   │   └── ingest.go               # shared redact→fingerprint→store sequence
+│   │
+│   ├── devserver/
+│   │   └── supervisor.go           # dev server + proxy supervisor (autoArm mode)
 │   │
 │   ├── proxy/
 │   │   └── proxy.go                # reverse proxy with capture transport
@@ -141,6 +145,12 @@ Example: `GET /users/123 404 not_found` → `GET:/users/:id:404:not_found`
   "redact": {
     "headers": ["Authorization", "Cookie", "X-Api-Key"],
     "patterns": ["Bearer [^ ]+", "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+"]
+  },
+  "dev": {
+    "command":   "bun run dev",
+    "port":      3000,
+    "proxyPort": 8080,
+    "minStatus": 400
   }
 }
 ```
@@ -215,6 +225,7 @@ The stdout adapter prints the fully-built prompt and exits 0. It is not an error
 | 1 | capture, ask, cases, show + all internals | Complete |
 | 2 | verify, replay, memory injection, OpenAI adapter | Complete |
 | 3 | proxy, watch (ngrok), latest, pipeline refactor | Complete |
+| 3b | `cachet dev` — dev server + proxy supervisor, autoArm, DevConfig | Complete |
 | 4 | shell completion, goreleaser, brew tap | Not started |
 
 ---

@@ -12,11 +12,20 @@ type Config struct {
 	Model       string       `mapstructure:"model"`
 	Temperature float64      `mapstructure:"temperature"`
 	Redact      RedactConfig `mapstructure:"redact"`
+	Dev         DevConfig    `mapstructure:"dev"`
 }
 
 type RedactConfig struct {
 	Headers  []string `mapstructure:"headers"`
 	Patterns []string `mapstructure:"patterns"`
+}
+
+// DevConfig holds settings for `cachet dev` — the combined dev-server + proxy supervisor.
+type DevConfig struct {
+	Command   string `mapstructure:"command"`   // shell command to start the dev server (e.g. "bun run dev")
+	Port      int    `mapstructure:"port"`      // dev server port (default 3000)
+	ProxyPort int    `mapstructure:"proxyPort"` // cachet proxy port (default 8080)
+	MinStatus int    `mapstructure:"minStatus"` // lowest status code to capture (default 400)
 }
 
 // Load reads cachet.config.json from the current directory, applies env overrides.

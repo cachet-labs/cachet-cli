@@ -141,6 +141,36 @@ cachet watch --ngrok --min-status 500  # only 5xx
 
 Both modes print the failure ID and a ready-to-run `cachet ask` hint immediately after capture.
 
+### Dev server + proxy in one command
+
+The simplest zero-friction setup: configure once, then replace your normal dev command with `cachet dev`.
+
+**Step 1 — add a `dev` section to `cachet.config.json`:**
+
+```json
+{
+  "dev": {
+    "command":   "bun run dev",
+    "port":      3000,
+    "proxyPort": 8080
+  }
+}
+```
+
+**Step 2 — run `cachet dev` instead of your usual command:**
+
+```bash
+cachet dev
+```
+
+cachet starts your dev server and the proxy together. Failures are captured automatically, but only after the server handles its first healthy response — so boot-time connection errors never pollute `.cachet/recent/`.
+
+Or pass everything as flags for a one-off run without touching config:
+
+```bash
+cachet dev --command "npm run dev" --port 3000 --proxy-port 8080
+```
+
 ---
 
 ## All commands
@@ -151,6 +181,7 @@ Both modes print the failure ID and a ready-to-run `cachet ask` hint immediately
 | `cachet ask <id>` | Diagnose with AI (or print prompt if unconfigured) |
 | `cachet ask --latest` | Diagnose the most recently captured failure |
 | `cachet latest` | Print the most recent failure ID (for shell pipelines) |
+| `cachet dev` | Start dev server + proxy together (configure once, replaces your dev command) |
 | `cachet proxy` | Auto-capture via local reverse proxy |
 | `cachet watch` | Auto-capture from ngrok tunnel |
 | `cachet verify <id>` | Replay + diff → resolve → store case |
